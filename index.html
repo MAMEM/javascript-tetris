@@ -215,13 +215,22 @@
     function keydown(ev) {
       var handled = false;
       if (playing) {
-        switch(ev.keyCode) {
-          case KEY.LEFT:   actions.push(DIR.LEFT);  handled = true; break;
-          case KEY.RIGHT:  actions.push(DIR.RIGHT); handled = true; break;
-          case KEY.UP:     actions.push(DIR.UP);    handled = true; break;
-          case KEY.DOWN:   actions.push(DIR.DOWN);  handled = true; break;
-          case KEY.ESC:    lose();                  handled = true; break;
-        }
+		if(ev.keyCode>47 && ev.keyCode <58){
+			if(current.x > ev.keyCode-48)
+				actions.push(DIR.LEFT);
+			else if(current.x < ev.keyCode-48)
+				actions.push(DIR.RIGHT);
+			handled = true;
+		}
+		else{
+			switch(ev.keyCode) {
+				case KEY.LEFT:   actions.push(DIR.LEFT);  handled = true; break;
+				case KEY.RIGHT:  actions.push(DIR.RIGHT); handled = true; break;
+				case KEY.UP:     actions.push(DIR.UP);    handled = true; break;
+				case KEY.DOWN:   actions.push(DIR.DOWN);  handled = true; break;
+				case KEY.ESC:    lose();                  handled = true; break;
+			}
+		}
       }
       else if (ev.keyCode == KEY.SPACE) {
         play();
@@ -283,7 +292,6 @@
         case DIR.DOWN:  drop();          break;
       }
     }
-
     function move(dir) {
       var x = current.x, y = current.y;
       switch(dir) {
