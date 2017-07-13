@@ -76,7 +76,7 @@
         ctx     = canvas.getContext('2d'),
         ucanvas = get('upcoming'),
         uctx    = ucanvas.getContext('2d'),
-        speed   = { start: 0.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
+        speed   = { start: 1.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
         nx      = 10, // width of tetris court (in blocks)
         ny      = 20, // height of tetris court (in blocks)
         nu      = 5;  // width/height of upcoming preview (in blocks)
@@ -393,8 +393,10 @@
     function drawCourt() {
       if (invalid.court) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (playing)
+        if (playing){
           drawPiece(ctx, current.type, current.x, current.y, current.dir);
+		  drawOverlay(ctx, current.type, current.x, current.y, current.dir);
+		}
         var x, y, block;
         for(y = 0 ; y < ny ; y++) {
           for (x = 0 ; x < nx ; x++) {
@@ -440,6 +442,17 @@
         drawBlock(ctx, x, y, type.color);
       });
     }
+	
+	function drawOverlay(ctx, type, x, y, dir) {
+		while(unoccupied(type, x, y, dir)){
+			y++;
+		}
+		y--;
+		eachblock(type, x, y, dir, function(x, y) {
+			drawBlock(ctx, x, y, "rgba(255, 255, 255, 0.5)");
+		});
+        return true;
+	}
 
     function drawBlock(ctx, x, y, color) {
       ctx.fillStyle = color;
