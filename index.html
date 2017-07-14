@@ -120,7 +120,10 @@
     var s = { size: 3, blocks: [0x06C0, 0x8C40, 0x6C00, 0x4620], color: 'green'  };
     var t = { size: 3, blocks: [0x0E40, 0x4C40, 0x4E00, 0x8C80], color: 'purple' };
     var z = { size: 3, blocks: [0x0C60, 0x4C80, 0xC600, 0x2640], color: 'red'    };
-
+	
+	var positionLock = 0.0;
+	var previousPos = -1;
+	//var ww ={ size: 1, blocks: [0xC000, 0xC000, 0xC000, 0xC000], color: "rgba(255, 255, 255, 0.5)" };
     //------------------------------------------------
     // do the bit manipulation and iterate through each
     // occupied block (x,y) for a given piece
@@ -215,8 +218,18 @@
 
     function keydown(ev) {
       var handled = false;
+	  
       if (playing) {
 		if(ev.keyCode>47 && ev.keyCode <58){
+		console.debug("positionLock = " + positionLock);
+			if(positionLock>=1.0)
+				//handled = true;
+				return;
+			if(current.x==ev.keyCode-48)
+				positionLock +=0.1;
+			else
+				positionLock = 0.0;
+			//drawBlock(ctx, ev.keyCode-48, 19, "rgba(255, 255, 255, 0.5)");
 			if(current.x > ev.keyCode-48)
 				actions.push(DIR.LEFT);
 			else if(current.x < ev.keyCode-48)
@@ -322,6 +335,7 @@
 
     function drop() {
       if (!move(DIR.DOWN)) {
+		positionLock = 0.0;
         addScore(10);
         dropPiece();
         removeLines();
@@ -394,8 +408,9 @@
       if (invalid.court) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (playing){
-          drawPiece(ctx, current.type, current.x, current.y, current.dir);
+          
 		  drawOverlay(ctx, current.type, current.x, current.y, current.dir);
+		  drawPiece(ctx, current.type, current.x, current.y, current.dir);
 		}
         var x, y, block;
         for(y = 0 ; y < ny ; y++) {
@@ -449,7 +464,7 @@
 		}
 		y--;
 		eachblock(type, x, y, dir, function(x, y) {
-			drawBlock(ctx, x, y, "rgba(255, 255, 255, 0.5)");
+			drawBlock(ctx, x, y, "rgba(255, 255, 255, " + positionLock + ")");
 		});
         return true;
 	}
