@@ -123,6 +123,7 @@
     var z = { size: 3, blocks: [0x0C60, 0x4C80, 0xC600, 0x2640], color: 'red'    };
 	
 	var positionLock = 0.0;
+	var initialDelayForSMR = 0;
 	var previousPos = -1;
 	//var ww ={ size: 1, blocks: [0xC000, 0xC000, 0xC000, 0xC000], color: "rgba(255, 255, 255, 0.5)" };
     //------------------------------------------------
@@ -294,8 +295,14 @@
         handle(actions.shift());
         dt = dt + idt;
         if (dt > step) {
-          dt = dt - step;
-          drop();
+			if( initialDelayForSMR > 3){
+				dt = dt - step;
+				drop();
+			}
+			else{
+				dt = dt - step;
+				initialDelayForSMR++;
+			}
         }
       }
     }
@@ -337,6 +344,7 @@
     function drop() {
       if (!move(DIR.DOWN)) {
 		positionLock = 0.0;
+		initialDelayForSMR = 0;
         addScore(10);
         dropPiece();
         removeLines();
