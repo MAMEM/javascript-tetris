@@ -11,6 +11,7 @@
     #menu p   { margin: 0.5em 0; text-align: center; }
     #menu p a { text-decoration: none; color: black; }
     #upcoming { display: block; margin: 0 auto; background-color: #E0E0E0; }
+    #smrviz   { display: block; margin: 0 auto; background-color: #00000000; }
     #score    { color: red; font-weight: bold; vertical-align: middle; }
     #rows     { color: blue; font-weight: bold; vertical-align: middle; }
     #stats    { position: absolute; bottom: 0em; right: 1em; }
@@ -20,7 +21,7 @@
     @media screen and (min-width: 600px) and (min-height: 600px)  { #tetris { font-size: 1.50em; width: 550px; } #menu { width: 250px; height: 500px; } #upcoming { width: 125px; height: 125px; } #canvas { width: 250px; height: 500px; } } /* 25px chunks */
     @media screen and (min-width: 700px) and (min-height: 700px)  { #tetris { font-size: 1.75em; width: 650px; } #menu { width: 300px; height: 600px; } #upcoming { width: 150px; height: 150px; } #canvas { width: 300px; height: 600px; } } /* 30px chunks */
     @media screen and (min-width: 800px) and (min-height: 800px)  { #tetris { font-size: 2.00em; width: 750px; } #menu { width: 350px; height: 700px; } #upcoming { width: 175px; height: 175px; } #canvas { width: 350px; height: 700px; } } /* 35px chunks */
-    @media screen and (min-width: 900px) and (min-height: 900px)  { #tetris { font-size: 2.25em; width: 1050px; } #menu { width: 400px; height: 800px; } #upcoming { width: 300px; height: 268px; } #canvas { width: 600px; height: 800px; } } /* 40px chunks */
+    @media screen and (min-width: 900px) and (min-height: 900px)  { #tetris { font-size: 2.25em; width: 1050px; } #menu { width: 400px; height: 800px; } #upcoming { width: 300px; height: 268px; } #canvas { width: 600px; height: 800px;  }  #smrviz {width: 300px; height: 50px;}} /* 40px chunks */
 	/*@media screen and (min-width: 900px) and (min-height: 900px)  { #tetris { font-size: 2.25em; width: 850px; } #menu { width: 400px; height: 800px; } #upcoming { width: 200px; height: 200px; } #canvas { width: 600px; height: 800px; } } /* 40px chunks */*/
   </style>
 </head>
@@ -34,6 +35,7 @@
       <p><canvas id="upcoming"></canvas></p>
       <p>score <span id="score">00000</span></p>
       <p>rows <span id="rows">0</span></p>
+      <p><canvas id="smrviz"></canvas></p>
     </div>
     <canvas id="canvas">
       Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
@@ -76,7 +78,9 @@
         canvas  = get('canvas'),
         ctx     = canvas.getContext('2d'),
         ucanvas = get('upcoming'),
+        smrcanvas = get('smrviz'),
         uctx    = ucanvas.getContext('2d'),
+        smrctx  = smrcanvas.getContext('2d'),
         speed   = { start: 1.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
         nx      = 10, // width of tetris court (in blocks)
         ny      = 15, // height of tetris court (in blocks)
@@ -214,6 +218,8 @@
       canvas.height  = canvas.clientHeight; // (ditto)
       ucanvas.width  = ucanvas.clientWidth;
       ucanvas.height = ucanvas.clientHeight;
+      smrcanvas.width = smrcanvas.clientWidth;
+      smrcanvas.height = smrcanvas.clientHeight;
       dx = canvas.width  / nx; // pixel size of a single tetris block
       dy = canvas.height / ny; // (ditto)
       invalidate();
@@ -241,6 +247,11 @@
 				actions.push(DIR.RIGHT);
 			handled = true;
 		}
+    else if(ev.keyCode >64 && ev.keyCode < 91){
+      //score = 0.5;
+      score = (ev.keyCode-65)/25;
+      drawSMRScore(smrctx,score);
+    }
 		else{
 			switch(ev.keyCode) {
 				case KEY.LEFT:   actions.push(DIR.LEFT);  handled = true; break;
@@ -423,6 +434,8 @@
           
 		  drawOverlay(ctx, current.type, current.x, current.y, current.dir);
 		  drawPiece(ctx, current.type, current.x, current.y, current.dir);
+      //var newdir = (current.dir == DIR.MAX ? DIR.MIN : current.dir + 1);
+      //HERE
 		}
         var x, y, block;
         for(y = 0 ; y < ny ; y++) {
@@ -468,6 +481,26 @@
       eachblock(type, x, y, dir, function(x, y) {
         drawBlock(ctx, x, y, type.color);
       });
+    }
+
+    function drawRotation(ctx, type, x, y, dir, color) {
+      eachblock(type, x , y, dir, function(x,y){
+        drawBlock(ctx, x, y, type.color);
+      });
+    }
+
+    function drawSMRScore(ctx, score){
+      smrctx.clearRect(0,0,smrcanvas.width,smrcanvas.height);
+      var grd = smrctx.createLinearGradient(0,0,300*score,0);
+      //F8F8F8
+      grd.addColorStop(0,'rgba(248,248,248,255)');
+      if(score < 0.5)
+        grd.addColorStop(1,"red");
+      else
+        grd.addColorStop(1,"green");
+
+      smrctx.fillStyle = grd;
+      smrctx.fillRect(10,10,300*score,80);
     }
 	
 	function drawOverlay(ctx, type, x, y, dir) {
