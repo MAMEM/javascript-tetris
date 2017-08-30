@@ -131,6 +131,7 @@
 	var positionLock = 0.0;
 	var initialDelayForSMR = 0;
 	var previousPos = -1;
+    var lastX = -1;
 	//var ww ={ size: 1, blocks: [0xC000, 0xC000, 0xC000, 0xC000], color: "rgba(255, 255, 255, 0.5)" };
     //------------------------------------------------
     // do the bit manipulation and iterate through each
@@ -231,15 +232,20 @@
 	  
       if (playing) {
 		if(ev.keyCode>47 && ev.keyCode <58){
+          lastX = ev.keyCode-48;
+                
 		console.debug("positionLock = " + positionLock);
 			if(positionLock>=1.0)
 				//handled = true;
 				return;
-			if(current.x==ev.keyCode-48)
-				if(initialDelayForSMR>3)
+			if(current.x==ev.keyCode-48){
+				if(initialDelayForSMR>10)
 					positionLock +=0.1;
-			else
+            }
+			else{
 				positionLock = 0.0;
+              console.log('reset lock');
+            }
 			//drawBlock(ctx, ev.keyCode-48, 19, "rgba(255, 255, 255, 0.5)");
 			if(current.x > ev.keyCode-48)
 				actions.push(DIR.LEFT);
@@ -253,6 +259,9 @@
       drawSMRScore(smrctx,score);
     }
 		else{
+          if(initialDelayForSMR>10){
+            return;
+          }
 			switch(ev.keyCode) {
 				case KEY.LEFT:   actions.push(DIR.LEFT);  handled = true; break;
 				case KEY.RIGHT:  actions.push(DIR.RIGHT); handled = true; break;
@@ -309,7 +318,7 @@
         handle(actions.shift());
         dt = dt + idt;
         if (dt > step) {
-			if( initialDelayForSMR > 3){
+			if( initialDelayForSMR > 10){
 				dt = dt - step;
 				drop();
 			}
@@ -348,6 +357,7 @@
     }
 
     function rotate() {
+      initialDelayForSMR =0;
       var newdir = (current.dir == DIR.MAX ? DIR.MIN : current.dir + 1);
       if (unoccupied(current.type, current.x, current.y, newdir)) {
         current.dir = newdir;
@@ -446,6 +456,7 @@
         }
         ctx.strokeRect(0, 0, nx*dx - 1, ny*dy - 1); // court boundary
         invalid.court = false;
+        drawBlock(ctx,lastX,14,"rgba(100,100,100,1)");
       }
     }
 
@@ -481,6 +492,7 @@
       eachblock(type, x, y, dir, function(x, y) {
         drawBlock(ctx, x, y, type.color);
       });
+      
     }
 
     function drawRotation(ctx, type, x, y, dir, color) {
@@ -491,6 +503,15 @@
 
     function drawSMRScore(ctx, score){
       smrctx.clearRect(0,0,smrcanvas.width,smrcanvas.height);
+      if(initialDelayForSMR>10)
+      {
+        var grd = smrctx.createLinearGradient(0,0,300,0);
+        grd.addColorStop(0,'rgba(248,248,248,255)');
+        grd.addColorStop(1,"black");
+        smrctx.fillStyle = grd;
+      	smrctx.fillRect(10,10,300*score,80);
+        return;
+      }
       var grd = smrctx.createLinearGradient(0,0,300*score,0);
       //F8F8F8
       grd.addColorStop(0,'rgba(248,248,248,255)');
@@ -504,6 +525,7 @@
     }
 	
 	function drawOverlay(ctx, type, x, y, dir) {
+		
 		while(unoccupied(type, x, y, dir)){
 			y++;
 		}
