@@ -320,7 +320,9 @@
     }
 
     function update(idt) {
-      setRows(initialDelayForSMR);
+      //setRows(initialDelayForSMR);
+	  if(current.type.color=='yellow')
+		initialDelayForSMR = 100;
       if (playing) {
 		//document.getElementById("debug").innerHTML = "" + current.x + " " + current.dir + " " + current.type;
         if (vscore < score)
@@ -466,7 +468,7 @@
         }
         ctx.strokeRect(0, 0, nx*dx - 1, ny*dy - 1); // court boundary
         invalid.court = false;
-        drawBlock(ctx,lastX,14,"rgba(100,100,100,1)");
+        drawBlock(ctx,lastX,14,"rgba(100,100,100,0.4)");
       }
     }
 
