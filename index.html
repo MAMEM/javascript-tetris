@@ -339,7 +339,7 @@
         smrcanvas = get('smrviz'),
         uctx    = ucanvas.getContext('2d'),
         smrctx  = smrcanvas.getContext('2d'),
-        speed   = { start: 1.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
+        speed   = { start: 2, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
         nx      = 10, // width of tetris court (in blocks)
         ny      = 15, // height of tetris court (in blocks)
         nu      = 5;  // width/height of upcoming preview (in blocks)
@@ -388,7 +388,6 @@
 
     var SMRCOUNT = 3;
     var positionLock = 0.0;
-    var initialDelayForSMR = 0;
     var previousScore = 0;
     var previousPos = -1;
     var lastX = -1;
@@ -492,9 +491,6 @@
 
         if (playing) {
             if(ev.keyCode>47 && ev.keyCode <58){
-                if(initialDelayForSMR<SMRCOUNT) {
-                    return;
-                }
                 lastX = ev.keyCode-48;
 
                 console.debug("positionLock = " + positionLock);
@@ -502,8 +498,7 @@
                 //handled = true;
                     return;
                 if(current.x==ev.keyCode-48){
-                    if(initialDelayForSMR>=SMRCOUNT)
-                        positionLock +=0.1;
+                        positionLock +=0.15;
                 }
                 else{
                     positionLock = 0.0;
@@ -518,26 +513,12 @@
             }
             else if(ev.keyCode >64 && ev.keyCode < 91){
                 //score = 0.5;
-                if(previousScore>ev.keyCode){
-                    initialDelayForSMR ++;
-                }
-                else if(ev.keyCode==65){
-                    initialDelayForSMR++;
-                }
-                if(initialDelayForSMR==3){
-                    var audio = new Audio('button-1.wav');
-                    initialDelayForSMR = 10;
-                    audio.play();
-                }
                 previousScore = ev.keyCode;
                 score = (ev.keyCode-65)/25;
                 drawSMRScore(smrctx,score);
             }
             else{
                 
-                  if(initialDelayForSMR>=SMRCOUNT){
-                    return;
-                  }
                   
                 switch(ev.keyCode) {
                     case KEY.LEFT:   actions.push(DIR.LEFT);  handled = true; break;
@@ -588,23 +569,18 @@
     }
 
     function update(idt) {
-        //setRows(initialDelayForSMR);
-        if(current.type.color==='yellow')
-            initialDelayForSMR = 100;
         if (playing) {
             //document.getElementById("debug").innerHTML = "" + current.x + " " + current.dir + " " + current.type;
             if (vscore < score)
                 setVisualScore(vscore + 1);
             handle(actions.shift());
-            dt = dt + idt;
+          	if(positionLock>1)
+              dt = dt + idt*3;
+          	else
+            	dt = dt + idt;
             if (dt > step) {
-                if( initialDelayForSMR >= SMRCOUNT){
                     dt = dt - step;
                     drop();
-                }
-                else{
-                    dt = dt - step;
-                }
             }
         }
     }
@@ -636,7 +612,6 @@
     }
 
     function rotate() {
-        initialDelayForSMR =0;// REMOVETHIS COMMENT!!!!
         var newdir = (current.dir == DIR.MAX ? DIR.MIN : current.dir + 1);
         if (unoccupied(current.type, current.x, current.y, newdir)) {
             current.dir = newdir;
@@ -647,7 +622,6 @@
     function drop() {
         if (!move(DIR.DOWN)) {
             positionLock = 0.0;
-            initialDelayForSMR = 0;
             addScore(10);
             dropPiece();
             removeLines();
@@ -735,7 +709,7 @@
             }
             ctx.strokeRect(0, 0, nx*dx - 1, ny*dy - 1); // court boundary
             invalid.court = false;
-            drawCircle(ctx,lastX,14,"rgba(100,100,100,0.4)");
+          	drawCircle(ctx,lastX,14,"rgba(100,100,100,0.4)");
         }
     }
 
@@ -773,56 +747,7 @@
         });
 
     }
-
-    function drawRotation(ctx, type, x, y, dir, color) {
-        eachblock(type, x , y, dir, function(x,y){
-            drawBlock(ctx, x, y, type.color);
-        });
-    }
-
-    function drawSMRScore(ctx, score){
-        smrctx.clearRect(0,0,smrcanvas.width,smrcanvas.height);
-        var grd;
-        if(initialDelayForSMR>=SMRCOUNT)
-        {
-            grd = smrctx.createLinearGradient(0,0,300,0);
-            grd.addColorStop(0,'rgba(248,248,248,255)');
-            grd.addColorStop(1,"black");
-            smrctx.fillStyle = grd;
-            smrctx.fillRect(10,10,300*score,80);
-            return;
-        }
-        grd = smrctx.createLinearGradient(0,0,300*score,0);
-        //F8F8F8
-        grd.addColorStop(0,'rgba(248,248,248,255)');
-        if(score < 0.5)
-            grd.addColorStop(1,"red");
-        else
-            grd.addColorStop(1,"green");
-
-        smrctx.fillStyle = grd;
-        smrctx.fillRect(10,10,300*score,80);
-    }
-
-    function drawOverlay(ctx, type, x, y, dir) {
-
-        while(unoccupied(type, x, y, dir)){
-            y++;
-        }
-        y--;
-        console.log(positionLock);
-        eachblock(type, x, y, dir, function(x, y) {
-            if(positionLock >=1)
-            {
-                drawBlock(ctx,x,y,"rgba(0,0,0, 0.8");
-            }
-            else{
-                drawBlock(ctx, x, y, "rgba(255, 255, 255, " + positionLock + ")");
-            }
-        });
-        return true;
-    }
-
+  
 	function drawCircle(ctx, x, y, color) {
       	ctx.beginPath();
       	x ++;
@@ -857,7 +782,47 @@
       	
       	
     }
-  
+
+    function drawRotation(ctx, type, x, y, dir, color) {
+        eachblock(type, x , y, dir, function(x,y){
+            drawBlock(ctx, x, y, type.color);
+        });
+    }
+
+    function drawSMRScore(ctx, score){
+        smrctx.clearRect(0,0,smrcanvas.width,smrcanvas.height);
+        var grd;
+        grd = smrctx.createLinearGradient(0,0,300*score,0);
+        //F8F8F8
+        grd.addColorStop(0,'rgba(248,248,248,255)');
+        if(score < 0.5)
+            grd.addColorStop(1,"red");
+        else
+            grd.addColorStop(1,"green");
+
+        smrctx.fillStyle = grd;
+        smrctx.fillRect(10,10,300*score,80);
+    }
+
+    function drawOverlay(ctx, type, x, y, dir) {
+
+        while(unoccupied(type, x, y, dir)){
+            y++;
+        }
+        y--;
+        console.log(positionLock);
+        eachblock(type, x, y, dir, function(x, y) {
+            if(positionLock >=1)
+            {
+                drawBlock(ctx,x,y,"rgba(0,0,0, 0.8");
+            }
+            else{
+                drawBlock(ctx, x, y, "rgba(255, 255, 255, " + positionLock + ")");
+            }
+        });
+        return true;
+    }
+
     function drawBlock(ctx, x, y, color) {
         ctx.fillStyle = color;
         ctx.fillRect(x*dx, y*dy, dx, dy);
