@@ -339,7 +339,7 @@
         smrcanvas = get('smrviz'),
         uctx    = ucanvas.getContext('2d'),
         smrctx  = smrcanvas.getContext('2d'),
-        speed   = { start: 1.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
+        speed   = { start: 1.6, decrement: 0.05, min: 0.1 }, // how long before piece drops by 1 row (seconds)
         nx      = 10, // width of tetris court (in blocks)
         ny      = 15, // height of tetris court (in blocks)
         nu      = 5;  // width/height of upcoming preview (in blocks)
@@ -518,7 +518,6 @@
                 handled = true;
             }
             else if(ev.keyCode >64 && ev.keyCode < 91){
-                //score = 0.5;
                 if(previousScore>ev.keyCode){
                     initialDelayForSMR ++;
                 }
@@ -531,8 +530,8 @@
                     audio.play();
                 }
                 previousScore = ev.keyCode;
-                score = (ev.keyCode-65)/25;
-                drawSMRScore(smrctx,score);
+                //score = (ev.keyCode-65)/25;
+                drawSMRScore(smrctx,(ev.keyCode-65)/25);
             }
             else{
                 
@@ -592,6 +591,8 @@
         //setRows(initialDelayForSMR);
         if(current.type.color==='yellow')
             initialDelayForSMR = 100;
+		if(positionLock >=1)
+			addScore(1);
         if (playing) {
             //document.getElementById("debug").innerHTML = "" + current.x + " " + current.dir + " " + current.type;
             if (vscore < score)
@@ -686,7 +687,7 @@
         }
         if (n > 0) {
             addRows(n);
-            addScore(100*Math.pow(2,n-1)); // 1: 100, 2: 200, 3: 400, 4: 800
+            addScore(100*Math.pow(2,n-1)*4); // 1: 100, 2: 200, 3: 400, 4: 800
         }
     }
 
@@ -784,7 +785,7 @@
         });
     }
 
-    function drawSMRScore(ctx, score){
+    function drawSMRScore(ctx, smrscore){
         smrctx.clearRect(0,0,smrcanvas.width,smrcanvas.height);
         var grd;
         if(initialDelayForSMR>=SMRCOUNT)
@@ -793,19 +794,19 @@
             grd.addColorStop(0,'rgba(248,248,248,255)');
             grd.addColorStop(1,"black");
             smrctx.fillStyle = grd;
-            smrctx.fillRect(10,10,300*score,80);
+            smrctx.fillRect(10,10,300*smrscore,80);
             return;
         }
-        grd = smrctx.createLinearGradient(0,0,300*score,0);
+        grd = smrctx.createLinearGradient(0,0,300*smrscore,0);
         //F8F8F8
         grd.addColorStop(0,'rgba(248,248,248,255)');
-        if(score < 0.5)
+        if(smrscore < 0.5)
             grd.addColorStop(1,"red");
         else
             grd.addColorStop(1,"green");
 
         smrctx.fillStyle = grd;
-        smrctx.fillRect(10,10,300*score,80);
+        smrctx.fillRect(10,10,300*smrscore,80);
     }
 
     function drawOverlay(ctx, type, x, y, dir) {
