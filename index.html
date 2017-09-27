@@ -339,7 +339,7 @@
         smrcanvas = get('smrviz'),
         uctx    = ucanvas.getContext('2d'),
         smrctx  = smrcanvas.getContext('2d'),
-        speed   = { start: 2, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
+        speed   = { start: 2, decrement: 0.05, min: 0.5 }, // how long before piece drops by 1 row (seconds)
         nx      = 10, // width of tetris court (in blocks)
         ny      = 15, // height of tetris court (in blocks)
         nu      = 5;  // width/height of upcoming preview (in blocks)
@@ -512,10 +512,9 @@
                 handled = true;
             }
             else if(ev.keyCode >64 && ev.keyCode < 91){
-                //score = 0.5;
                 previousScore = ev.keyCode;
-                score = (ev.keyCode-65)/25;
-                drawSMRScore(smrctx,score);
+                //score = (ev.keyCode-65)/25;
+                drawSMRScore(smrctx,(ev.keyCode-65)/25);
             }
             else{
                 
@@ -569,13 +568,15 @@
     }
 
     function update(idt) {
+		if(positionLock >=1)
+			addScore(1);
         if (playing) {
             //document.getElementById("debug").innerHTML = "" + current.x + " " + current.dir + " " + current.type;
             if (vscore < score)
                 setVisualScore(vscore + 1);
             handle(actions.shift());
           	if(positionLock>1)
-              dt = dt + idt*3;
+              dt = dt + idt*5;
           	else
             	dt = dt + idt;
             if (dt > step) {
@@ -656,7 +657,7 @@
         }
         if (n > 0) {
             addRows(n);
-            addScore(100*Math.pow(2,n-1)); // 1: 100, 2: 200, 3: 400, 4: 800
+            addScore(100*Math.pow(2,n-1)*4); // 1: 100, 2: 200, 3: 400, 4: 800
         }
     }
 
@@ -789,19 +790,19 @@
         });
     }
 
-    function drawSMRScore(ctx, score){
+    function drawSMRScore(ctx, smrscore){
         smrctx.clearRect(0,0,smrcanvas.width,smrcanvas.height);
         var grd;
-        grd = smrctx.createLinearGradient(0,0,300*score,0);
+        grd = smrctx.createLinearGradient(0,0,300*smrscore,0);
         //F8F8F8
         grd.addColorStop(0,'rgba(248,248,248,255)');
-        if(score < 0.5)
+        if(smrscore < 0.5)
             grd.addColorStop(1,"red");
         else
             grd.addColorStop(1,"green");
 
         smrctx.fillStyle = grd;
-        smrctx.fillRect(10,10,300*score,80);
+        smrctx.fillRect(10,10,300*smrscoreq,80);
     }
 
     function drawOverlay(ctx, type, x, y, dir) {
