@@ -828,6 +828,19 @@
     }
 
 	function drawCircle(ctx, x, y, color) {
+		result = true;
+		y = 0;
+		while(result && y <= 14)
+		{
+			if ((x < 0) || (x >= nx) || (y < 0) || (y >= ny) || getBlock(x,y)){
+				result = false;
+			}
+			else{
+				y++;
+				result = true;
+			}
+		}
+		y--;
       	ctx.beginPath();
       	x ++;
       	y ++;
