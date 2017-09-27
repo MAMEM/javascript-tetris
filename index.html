@@ -503,7 +503,8 @@
                     return;
                 if(current.x==ev.keyCode-48){
                     if(initialDelayForSMR>=SMRCOUNT)
-                        positionLock +=0.1;
+                        //positionLock +=0.1;
+                      positionLock +=0.15;
                 }
                 else{
                     positionLock = 0.0;
@@ -596,7 +597,10 @@
             if (vscore < score)
                 setVisualScore(vscore + 1);
             handle(actions.shift());
-            dt = dt + idt;
+          	if(positionLock >=1)
+              	dt = dt + idt*5;
+          	else
+            	dt = dt + idt;
             if (dt > step) {
                 if( initialDelayForSMR >= SMRCOUNT){
                     dt = dt - step;
