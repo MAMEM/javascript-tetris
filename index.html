@@ -596,9 +596,9 @@
         if (playing) {
             //document.getElementById("debug").innerHTML = "" + current.x + " " + current.dir + " " + current.type;
             if (vscore < score)
-                setVisualScore(vscore + 1);
+                setVisualScore(Math.min(vscore + 5,score));
             handle(actions.shift());
-          	if(positionLock >=1)
+          	if(positionLock >1)
               	dt = dt + idt*5;
           	else
             	dt = dt + idt;
