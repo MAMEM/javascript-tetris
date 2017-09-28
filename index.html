@@ -750,6 +750,19 @@
     }
   
 	function drawCircle(ctx, x, y, color) {
+		+		result = true;
+		y = 0;
+		while(result && y <= 14)
+		{
+			if ((x < 0) || (x >= nx) || (y < 0) || (y >= ny) || getBlock(x,y)){
+				result = false;
+			}
+			else{
+				y++;
+				result = true;
+			}
+		}
+		y--;
       	ctx.beginPath();
       	x ++;
       	y ++;
@@ -802,7 +815,7 @@
             grd.addColorStop(1,"green");
 
         smrctx.fillStyle = grd;
-        smrctx.fillRect(10,10,300*smrscoreq,80);
+        smrctx.fillRect(10,10,300*smrscore,80);
     }
 
     function drawOverlay(ctx, type, x, y, dir) {
