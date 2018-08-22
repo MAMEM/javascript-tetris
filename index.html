@@ -24,9 +24,11 @@
         <p>score <span id="score">00000</span> | rows <span id="rows">0</span></p>
 
         <p><canvas id="smrviz"></canvas></p>
-        <div class="leaderboard">
+
+        <div class="leaderboard" style="display: none;">
             <div class="content"></div>
         </div>
+				<p><canvas id="logging"></canvas></p>
 
     </div>
     <canvas id="canvas">
@@ -48,7 +50,7 @@
         messagingSenderId: "816231118115"
     };
 
-
+	var loggerElem = document.getElementById("logging");
     (function ($) {
         var FakePoller = function(options, callback){
             var defaults = {
@@ -184,7 +186,7 @@
             return this;
         };
         window.FakePoller = FakePoller;
-
+      
         var Leaderboard = function (elemId, options) {
             var _this = this;
             var defaults = {
@@ -492,19 +494,28 @@
 
         if (playing) {
             if(ev.keyCode>47 && ev.keyCode <58){
+			//eye-tracker
                 if(initialDelayForSMR<SMRCOUNT) {
                     return;
                 }
                 lastX = ev.keyCode-48;
 
-                console.debug("positionLock = " + positionLock);
                 if(positionLock>=1.0)
                 //handled = true;
                     return;
                 if(current.x==ev.keyCode-48){
-                    if(initialDelayForSMR>=SMRCOUNT)
+                    if(initialDelayForSMR>=SMRCOUNT){
                         //positionLock +=0.1;
                       positionLock +=0.15;
+					  if(positionLock>=1){
+					  	addScore(30*(3/step));
+						try{
+							SendLSLMessage("PositionLock");
+						}
+						catch(err){
+                        }
+					  }
+					}
                 }
                 else{
                     positionLock = 0.0;
@@ -518,6 +529,7 @@
                 handled = true;
             }
             else if(ev.keyCode >64 && ev.keyCode < 91){
+			//smr_events
                 if(previousScore>ev.keyCode){
                     initialDelayForSMR ++;
                 }
@@ -528,11 +540,63 @@
                     var audio = new Audio('button-1.wav');
                     initialDelayForSMR = 10;
                     audio.play();
+					loggerElem.style.backgroundColor = "#006eff";
+					try {
+						SendLSLMessage("rotationunlock");
+					}
+					catch(err) {
+					}
+
                 }
+				else if(initialDelayForSMR < 3){
+					loggerElem.style.backgroundColor = "#00000000";
+				}
                 previousScore = ev.keyCode;
                 //score = (ev.keyCode-65)/25;
                 drawSMRScore(smrctx,(ev.keyCode-65)/25);
             }
+			else if(ev.keyCode == 97) {
+				//speed fast (chill)
+				step = 1;
+				try {
+					SendLSLMessage("step:1");
+				}
+				catch(err) {
+				}
+			}
+			else if(ev.keyCode == 98) {
+				step = 1.5;
+				try {
+					SendLSLMessage("step:1.5");
+				}
+				catch(err) {
+				}
+			}
+			else if(ev.keyCode == 99) {
+				step = 2;
+				try {
+					SendLSLMessage("step:2");
+				}
+				catch(err) {
+				}
+			}
+			else if(ev.keyCode == 100) {
+				step = 2.5;
+				try {
+					SendLSLMessage("step:2.5");
+				}
+				catch(err) {
+				}				
+			}
+			else if(ev.keyCode == 101) {
+				//speed slow (stressed)
+				try {
+					SendLSLMessage("step:3");
+				}
+				catch(err) {
+				}				
+				step = 3;
+			}
             else{
                 
                   if(initialDelayForSMR>=SMRCOUNT){
@@ -550,6 +614,14 @@
         }
         else if (ev.keyCode == KEY.SPACE) {
             play();
+			step = 3;
+			try {
+				SendLSLMessage("gamestart");
+				SendLSLMessage("step:" + step);
+			}
+			catch(err) {
+			}
+			loggerElem.style.backgroundColor = "#f44242";
             handled = true;
         }
         if (handled)
@@ -565,16 +637,33 @@
 
     function setVisualScore(n)      { vscore = n || score; invalidateScore(); }
     function setScore(n)            { score = n; setVisualScore(n);  }
-    function addScore(n)            { score = score + n;   }
+    function addScore(n)            { 
+		score = score + n; 
+		try{
+			SendLSLMessage("Score: " + score);
+		}
+		catch(err){
+		}
+	}
     function clearScore()           { setScore(0); }
     function clearRows()            { setRows(0); }
-    function setRows(n)             { rows = n; step = Math.max(speed.min, speed.start - (speed.decrement*rows)); invalidateRows(); }
+    function setRows(n)             { rows = n;  invalidateRows(); }
+	//step = Math.max(speed.min, speed.start - (speed.decrement*rows));
     function addRows(n)             { setRows(rows + n); }
     function getBlock(x,y)          { return (blocks && blocks[x] ? blocks[x][y] : null); }
     function setBlock(x,y,type)     { blocks[x] = blocks[x] || []; blocks[x][y] = type; invalidate(); }
     function clearBlocks()          { blocks = []; invalidate(); }
     function clearActions()         { actions = []; }
-    function setCurrentPiece(piece) { current = piece || randomPiece(); invalidate();     }
+    function setCurrentPiece(piece) { 
+		current = piece || randomPiece(); 
+		//current.type
+		try {
+			SendLSLMessage(current.type.color);
+		}
+		catch(err) {
+		}
+		invalidate();     
+	}
     function setNextPiece(piece)    { next    = piece || randomPiece(); invalidateNext(); }
 
     function reset() {
@@ -591,8 +680,15 @@
         //setRows(initialDelayForSMR);
         if(current.type.color==='yellow')
             initialDelayForSMR = 100;
-		if(positionLock >=1)
-			addScore(1);
+		if(positionLock >=1){
+			loggerElem.style.backgroundColor = "#6e00ff";
+			try {
+				SendLSLMessage("positionlock");
+			}
+			catch(err) {
+			}
+
+		}
         if (playing) {
             //document.getElementById("debug").innerHTML = "" + current.x + " " + current.dir + " " + current.type;
             if (vscore < score)
@@ -642,6 +738,12 @@
 
     function rotate() {
         initialDelayForSMR =0;// REMOVETHIS COMMENT!!!!
+		loggerElem.style.backgroundColor = "#41f4ca";
+		try {
+			SendLSLMessage("rotate");
+		}
+		catch(err) {
+		}
         var newdir = (current.dir == DIR.MAX ? DIR.MIN : current.dir + 1);
         if (unoccupied(current.type, current.x, current.y, newdir)) {
             current.dir = newdir;
@@ -653,15 +755,41 @@
         if (!move(DIR.DOWN)) {
             positionLock = 0.0;
             initialDelayForSMR = 0;
-            addScore(10);
+            addScore(10*(3/step));
             dropPiece();
             removeLines();
             setCurrentPiece(next);
             setNextPiece(randomPiece());
             clearActions();
             if (occupied(current.type, current.x, current.y, current.dir)) {
+				loggerElem.style.backgroundColor = "#f4d341";
+				try {
+					SendLSLMessage("gameend");
+				}
+				catch(err) {
+				}
+				
                 lose();
             }
+			else{
+				try {
+					SendLSLMessage("newtetrimino");
+					gridencoding = "";
+					for(y = 0 ; y < ny ; y++) {
+						for (x = 0 ; x < nx ; x++) {
+							if (block = getBlock(x,y))
+								gridencoding += "1";
+							else
+								gridencoding += "0";
+						}
+					}
+					SendLSLMessage(gridencoding);
+				}
+				catch(err) {
+				}
+				
+				loggerElem.style.backgroundColor = "#a6f441";
+			}
         }
     }
 
@@ -687,8 +815,44 @@
         }
         if (n > 0) {
             addRows(n);
-            addScore(100*Math.pow(2,n-1)*4); // 1: 100, 2: 200, 3: 400, 4: 800
+            addScore((100*Math.pow(2,n-1)*4)*(3/step)); // 1: 100, 2: 200, 3: 400, 4: 800
         }
+		switch(n)
+		{
+			case 1:
+				try {
+					SendLSLMessage("linex1");
+				}
+				catch(err) {
+				}
+				
+				loggerElem.style.backgroundColor = "#d800ff";
+				break;
+			case 2:
+				try {
+					SendLSLMessage("linex2");
+				}
+				catch(err) {
+				}
+				loggerElem.style.backgroundColor = "#ff8c00";
+				break;
+			case 3:
+				try {
+					SendLSLMessage("linex3");
+				}
+				catch(err) {
+				}
+				loggerElem.style.backgroundColor = "#000000";
+				break;
+			case 4:
+				try {
+					SendLSLMessage("linex4");
+				}
+				catch(err) {
+				}
+				loggerElem.style.backgroundColor = "#706f6f";
+				break;
+		}
     }
 
     function removeLine(n) {
@@ -761,6 +925,7 @@
     function drawScore() {
         if (invalid.score) {
             html('score', ("00000" + Math.floor(vscore)).slice(-5));
+			//html('score', ("00000" + step));
             invalid.score = false;
         }
     }
